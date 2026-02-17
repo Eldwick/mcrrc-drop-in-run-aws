@@ -134,8 +134,26 @@ All entities live in one DynamoDB table. The schema uses composite keys:
 - Use `camelCase` for all attribute names in DynamoDB items.
 - All items must have `createdAt` and `updatedAt` ISO 8601 timestamp strings.
 - The `editToken` is stored on the base table item but excluded from GSI projections. Direct `GetItem` by PK/SK is needed for edit operations.
-- No SQL. No migrations. Table and GSI structure are defined in CDK (`/infra/lib/database-stack.ts`).
+- No SQL. Table and GSI structure are defined in CDK (`/infra/lib/database-stack.ts`).
 - Use `uuid` (v4) for run IDs and edit tokens.
+
+### Data Integrity (IMPORTANT)
+
+DynamoDB does not enforce schemas, uniqueness constraints, NOT NULL, or column-level type checking the way Postgres does. **All data integrity is enforced at the application layer in Lambda handlers.** These protections are deliberate and must be maintained as the app evolves:
+
+- **Zod schemas use `.strict()`** — unknown/unexpected fields in request bodies are rejected with 400, not silently stripped. This prevents injection of system fields like `PK`, `editToken`, `createdAt`, etc. through the API.
+- **Create handler uses `ConditionExpression: "attribute_not_exists(PK)"`** — prevents silent overwrites on PK collision (replaces Postgres's UNIQUE constraint on primary key).
+- **Update handler uses a field allowlist (`UPDATABLE_FIELDS`)** — only explicitly listed business fields can be written. System fields (`PK`, `SK`, `GSI1PK`, `GSI1SK`, `editToken`, `createdAt`, `id`) are never writable through the update path.
+- **Update handler uses `ReturnValues: "ALL_NEW"`** — responses reflect the authoritative post-write state from DynamoDB, not a stale merge of pre-read + input.
+- **Empty updates are rejected** — an update request with no actual field changes returns 400 instead of making a wasteful DynamoDB write.
+
+**Treat data model changes like migrations.** Even though there's no formal migration framework, any change to the item schema (adding/removing/renaming attributes, changing types, modifying key structure or GSI definitions) should be treated with the same rigor as a database migration:
+
+1. Update the Zod schemas in `lambda/shared/validators.ts` first — they are the source of truth for what the API accepts.
+2. Update the `UPDATABLE_FIELDS` allowlist in `lambda/runs/update.ts` if adding new editable fields.
+3. Update the CDK table/GSI definitions in `infra/lib/database-stack.ts` if key structure changes.
+4. Write tests for the new validation behavior before updating handler logic.
+5. Consider existing data — DynamoDB items already in the table won't automatically gain new attributes or lose old ones. Handle both old and new shapes in read paths if needed.
 
 ## API Conventions
 
