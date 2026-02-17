@@ -100,7 +100,7 @@ export interface RunFormInitialData {
 }
 
 export interface RunResponse {
-  id: number;
+  id: string;
   name: string;
   dayOfWeek: string;
   startTime: string;

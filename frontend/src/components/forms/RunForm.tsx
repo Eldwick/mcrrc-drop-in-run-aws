@@ -31,14 +31,14 @@ const DEFAULT_PACE_GROUPS: PaceGroupInput = {
 };
 
 interface SuccessData {
-  id: number;
+  id: string;
   editToken?: string;
 }
 
 interface RunFormProps {
   mode?: "create" | "edit";
   initialData?: RunFormInitialData;
-  runId?: number;
+  runId?: string;
   editToken?: string;
 }
 

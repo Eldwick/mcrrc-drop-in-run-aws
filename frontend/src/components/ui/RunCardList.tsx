@@ -7,8 +7,8 @@ import type { RunResponse, RankedRun } from "@/lib/types/run";
 interface RunCardListProps {
   runs: RunResponse[];
   rankedRuns: RankedRun[] | null;
-  selectedRunId: number | null;
-  onSelectRun: (runId: number) => void;
+  selectedRunId: string | null;
+  onSelectRun: (runId: string) => void;
 }
 
 export const RunCardList = ({

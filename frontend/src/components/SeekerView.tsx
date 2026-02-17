@@ -74,7 +74,7 @@ export const SeekerView = ({ runs }: SeekerViewProps) => {
     [dispatch]
   );
 
-  const scrollCardIntoView = useCallback((runId: number) => {
+  const scrollCardIntoView = useCallback((runId: string) => {
     setTimeout(() => {
       const card = document.getElementById(`run-card-${runId}`);
       if (!card) return;
@@ -94,7 +94,7 @@ export const SeekerView = ({ runs }: SeekerViewProps) => {
   }, []);
 
   const handleMarkerClick = useCallback(
-    (runId: number) => {
+    (runId: string) => {
       dispatch({ type: "SELECT_RUN", runId });
       scrollCardIntoView(runId);
     },
@@ -102,7 +102,7 @@ export const SeekerView = ({ runs }: SeekerViewProps) => {
   );
 
   const handleCardSelect = useCallback(
-    (runId: number) => {
+    (runId: string) => {
       dispatch({ type: "SELECT_RUN", runId });
       scrollCardIntoView(runId);
     },

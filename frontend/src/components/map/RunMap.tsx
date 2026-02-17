@@ -42,7 +42,7 @@ const selectedIcon = new L.Icon({
 
 interface MapControllerProps {
   userLocation: { lat: number; lng: number } | null;
-  selectedRunId: number | null;
+  selectedRunId: string | null;
   runs: RunResponse[];
 }
 
@@ -87,9 +87,9 @@ const MapClickHandler = ({ onMapClick }: MapClickHandlerProps) => {
 interface RunMapProps {
   runs: RunResponse[];
   userLocation?: { lat: number; lng: number } | null;
-  selectedRunId?: number | null;
+  selectedRunId?: string | null;
   onMapClick?: (lat: number, lng: number) => void;
-  onMarkerClick?: (runId: number) => void;
+  onMarkerClick?: (runId: string) => void;
 }
 
 export const RunMap = ({

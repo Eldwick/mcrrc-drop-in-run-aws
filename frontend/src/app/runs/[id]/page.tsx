@@ -53,10 +53,18 @@ interface RunDetailRow {
   notes: string | null;
 }
 
-// TODO: Fetch run from API Gateway (GET /runs/{id})
-// Replace this stub with an actual API call once the backend is connected.
-async function fetchRun(_id: string): Promise<RunDetailRow | null> {
-  return null;
+async function fetchRun(id: string): Promise<RunDetailRow | null> {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (!apiUrl) return null;
+
+  try {
+    const res = await fetch(`${apiUrl}/runs/${id}`, { cache: "no-store" });
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json.data ?? null;
+  } catch {
+    return null;
+  }
 }
 
 interface RunDetailPageProps {

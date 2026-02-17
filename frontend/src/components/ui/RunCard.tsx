@@ -9,7 +9,7 @@ interface RunCardProps {
   distanceMiles?: number;
   paceMatch?: AvailabilityLevel;
   isSelected: boolean;
-  onSelect: (runId: number) => void;
+  onSelect: (runId: string) => void;
 }
 
 const paceMatchColors: Record<AvailabilityLevel, string> = {

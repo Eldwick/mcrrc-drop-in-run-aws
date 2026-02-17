@@ -142,10 +142,10 @@ describe("seekerReducer — bottom sheet auto-open", () => {
     it("keeps sheet collapsed when a run is selected from collapsed state", () => {
       const state = seekerReducer(initialState, {
         type: "SELECT_RUN",
-        runId: 1,
+        runId: "1",
       });
       expect(state.sheetState).toBe("collapsed");
-      expect(state.selectedRunId).toBe(1);
+      expect(state.selectedRunId).toBe("1");
     });
 
     it("collapses sheet from half when a run is selected", () => {
@@ -155,7 +155,7 @@ describe("seekerReducer — bottom sheet auto-open", () => {
       });
       state = seekerReducer(state, {
         type: "SELECT_RUN",
-        runId: 1,
+        runId: "1",
       });
       expect(state.sheetState).toBe("collapsed");
     });
@@ -167,7 +167,7 @@ describe("seekerReducer — bottom sheet auto-open", () => {
       });
       state = seekerReducer(state, {
         type: "SELECT_RUN",
-        runId: 1,
+        runId: "1",
       });
       expect(state.sheetState).toBe("collapsed");
     });

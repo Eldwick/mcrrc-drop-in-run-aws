@@ -10,7 +10,7 @@ interface SeekerState {
   locationQuery: string;
   userLocation: { lat: number; lng: number } | null;
   selectedPace: PaceRange | null;
-  selectedRunId: number | null;
+  selectedRunId: string | null;
   geocodeResults: GeocodeResult[];
   isGeocoding: boolean;
   geocodeError: string | null;
@@ -21,7 +21,7 @@ type SeekerAction =
   | { type: "SET_LOCATION_QUERY"; query: string }
   | { type: "SET_USER_LOCATION"; location: { lat: number; lng: number }; displayName?: string }
   | { type: "SET_SELECTED_PACE"; pace: PaceRange }
-  | { type: "SELECT_RUN"; runId: number | null }
+  | { type: "SELECT_RUN"; runId: string | null }
   | { type: "GEOCODE_START" }
   | { type: "GEOCODE_SUCCESS"; results: GeocodeResult[] }
   | { type: "GEOCODE_ERROR"; error: string }

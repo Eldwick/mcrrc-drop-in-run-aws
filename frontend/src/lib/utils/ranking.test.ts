@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { rankRuns } from "./ranking";
 import type { RunResponse } from "@/lib/types/run";
 
-function makeRun(overrides: Partial<RunResponse> & { id: number }): RunResponse {
+function makeRun(overrides: Partial<RunResponse> & { id: string }): RunResponse {
   return {
     name: `Run ${overrides.id}`,
     dayOfWeek: "Tuesday",
@@ -38,7 +38,7 @@ describe("rankRuns", () => {
   it("returns results sorted by relevance descending", () => {
     const runs = [
       makeRun({
-        id: 1,
+        id: "1",
         paceGroups: {
           sub_8: "rarely",
           "8_to_9": "rarely",
@@ -47,7 +47,7 @@ describe("rankRuns", () => {
         },
       }),
       makeRun({
-        id: 2,
+        id: "2",
         paceGroups: {
           sub_8: "consistently",
           "8_to_9": "rarely",
@@ -56,7 +56,7 @@ describe("rankRuns", () => {
         },
       }),
       makeRun({
-        id: 3,
+        id: "3",
         paceGroups: {
           sub_8: "frequently",
           "8_to_9": "rarely",
@@ -68,16 +68,16 @@ describe("rankRuns", () => {
 
     const result = rankRuns(runs, 39.14, -77.15, "sub_8");
 
-    expect(result[0].run.id).toBe(2);
-    expect(result[1].run.id).toBe(3);
-    expect(result[2].run.id).toBe(1);
+    expect(result[0].run.id).toBe("2");
+    expect(result[1].run.id).toBe("3");
+    expect(result[2].run.id).toBe("1");
     expect(result[0].relevanceScore).toBeGreaterThan(result[1].relevanceScore);
     expect(result[1].relevanceScore).toBeGreaterThan(result[2].relevanceScore);
   });
 
   it("reads the correct pace group for the selected range", () => {
     const run = makeRun({
-      id: 1,
+      id: "1",
       paceGroups: {
         sub_8: "rarely",
         "8_to_9": "consistently",
@@ -99,7 +99,7 @@ describe("rankRuns", () => {
   it("computes distance correctly", () => {
     // Bethesda (~39.0, -77.1) to Rockville (~39.08, -77.15)
     const run = makeRun({
-      id: 1,
+      id: "1",
       latitude: 39.08,
       longitude: -77.15,
     });
@@ -112,7 +112,7 @@ describe("rankRuns", () => {
 
   it("ranks closer run higher when pace match is equal", () => {
     const closeRun = makeRun({
-      id: 1,
+      id: "1",
       latitude: 39.141,
       longitude: -77.151,
       paceGroups: {
@@ -123,7 +123,7 @@ describe("rankRuns", () => {
       },
     });
     const farRun = makeRun({
-      id: 2,
+      id: "2",
       latitude: 39.3,
       longitude: -77.4,
       paceGroups: {
@@ -136,13 +136,13 @@ describe("rankRuns", () => {
 
     const result = rankRuns([farRun, closeRun], 39.14, -77.15, "sub_8");
 
-    expect(result[0].run.id).toBe(1);
-    expect(result[1].run.id).toBe(2);
+    expect(result[0].run.id).toBe("1");
+    expect(result[1].run.id).toBe("2");
     expect(result[0].distanceMiles).toBeLessThan(result[1].distanceMiles);
   });
 
   it("includes all input runs in the output", () => {
-    const runs = [makeRun({ id: 1 }), makeRun({ id: 2 }), makeRun({ id: 3 })];
+    const runs = [makeRun({ id: "1" }), makeRun({ id: "2" }), makeRun({ id: "3" })];
     const result = rankRuns(runs, 39.14, -77.15, "sub_8");
     expect(result).toHaveLength(3);
   });

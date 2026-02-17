@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { RunForm } from "@/components/forms/RunForm";
@@ -16,15 +16,11 @@ export default function EditRunPage() {
   const searchParams = useSearchParams();
 
   const token = searchParams.get("token");
-  const rawId = params.id;
-  const numId = useMemo(
-    () => (typeof rawId === "string" ? parseInt(rawId, 10) : NaN),
-    [rawId]
-  );
+  const rawId = typeof params.id === "string" ? params.id : null;
 
   const validationError = !token
     ? "You need an edit link to modify this run. If you've lost your link, contact the site admin."
-    : isNaN(numId)
+    : !rawId
       ? "Invalid run ID."
       : null;
 
@@ -45,7 +41,7 @@ export default function EditRunPage() {
 
     const fetchRun = async () => {
       try {
-        const res = await fetch(`/api/runs/${numId}?token=${token}`);
+        const res = await fetch(`/api/runs/${rawId}?token=${token}`);
 
         if (cancelled) return;
 
@@ -95,7 +91,7 @@ export default function EditRunPage() {
     return () => {
       cancelled = true;
     };
-  }, [numId, token, validationError, handleFetchError, handleFetchSuccess]);
+  }, [rawId, token, validationError, handleFetchError, handleFetchSuccess]);
 
   // Render validation errors (no effect needed)
   if (validationError) {
@@ -152,7 +148,7 @@ export default function EditRunPage() {
       <RunForm
         mode="edit"
         initialData={fetchState.data}
-        runId={numId}
+        runId={rawId!}
         editToken={token!}
       />
     </main>
