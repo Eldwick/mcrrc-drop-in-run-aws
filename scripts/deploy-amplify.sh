@@ -45,7 +45,7 @@ APP_ID=$(aws amplify create-app \
   --repository "${REPO_URL}" \
   --access-token "${GITHUB_TOKEN}" \
   --platform "WEB_COMPUTE" \
-  --environment-variables "NEXT_PUBLIC_API_URL=${API_URL}" \
+  --environment-variables "NEXT_PUBLIC_API_URL=${API_URL},AMPLIFY_MONOREPO_APP_ROOT=frontend" \
   --query 'app.appId' \
   --output text)
 
@@ -106,6 +106,7 @@ aws amplify create-branch \
   --app-id "${APP_ID}" \
   --branch-name "${BRANCH}" \
   --stage "PRODUCTION" \
+  --framework "Next.js - SSR" \
   --enable-auto-build \
   --query 'branch.branchName' \
   --output text > /dev/null

@@ -20,9 +20,9 @@ Run the deploy script from the repo root:
 This script:
 
 1. Creates the Amplify app with `WEB_COMPUTE` platform (SSR)
-2. Sets `NEXT_PUBLIC_API_URL` as an environment variable
+2. Sets `NEXT_PUBLIC_API_URL` and `AMPLIFY_MONOREPO_APP_ROOT=frontend` as environment variables
 3. Creates an IAM compute role (`amplify-compute-mcrrc-run-finder`) and attaches it
-4. Creates the `main` branch with auto-build enabled and `PRODUCTION` stage
+4. Creates the `main` branch with `Next.js - SSR` framework, auto-build enabled, and `PRODUCTION` stage
 5. Triggers the first deployment
 6. Prints the app URL, console link, and build log link
 
@@ -64,6 +64,7 @@ aws amplify get-job --app-id "$APP_ID" --branch-name main --job-id <JOB_ID> --qu
 | Variable | Value | Set By |
 |----------|-------|--------|
 | `NEXT_PUBLIC_API_URL` | API Gateway prod endpoint URL | `deploy-amplify.sh` (or Amplify Console) |
+| `AMPLIFY_MONOREPO_APP_ROOT` | `frontend` | `deploy-amplify.sh` (or Amplify Console) |
 
 To update environment variables after initial setup:
 
