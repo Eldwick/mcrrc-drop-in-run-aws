@@ -4,7 +4,11 @@ import { seedRuns } from "./seed-data.js";
 
 const TABLE_NAME = process.env.TABLE_NAME ?? "mcrrc-drop-in-runs";
 
-const client = new DynamoDBClient({});
+const client = new DynamoDBClient(
+  process.env.DYNAMODB_ENDPOINT
+    ? { endpoint: process.env.DYNAMODB_ENDPOINT }
+    : {}
+);
 const docClient = DynamoDBDocumentClient.from(client, {
   marshallOptions: { removeUndefinedValues: true },
 });
