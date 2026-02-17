@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { LocationSearch } from "./LocationSearch";
 import { PaceSelector } from "./PaceSelector";
+import type { PaceSelectorHandle } from "./PaceSelector";
 import type { PaceRange, GeocodeResult } from "@/lib/types/run";
 import { PACE_RANGE_LABELS } from "@/lib/types/run";
 
@@ -39,6 +40,7 @@ export const FloatingSearchBar = ({
 }: FloatingSearchBarProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const barRef = useRef<HTMLDivElement>(null);
+  const paceSelectorRef = useRef<PaceSelectorHandle>(null);
 
   const collapse = useCallback(() => setIsExpanded(false), []);
 
@@ -74,6 +76,11 @@ export const FloatingSearchBar = ({
       // Auto-collapse if pace is already set
       if (selectedPace) {
         collapse();
+      } else {
+        // Auto-focus the pace selector so user can pick pace via keyboard
+        requestAnimationFrame(() => {
+          paceSelectorRef.current?.focus();
+        });
       }
     },
     [onSelectGeoResult, selectedPace, collapse]
@@ -122,6 +129,7 @@ export const FloatingSearchBar = ({
             />
             <div className="mt-2">
               <PaceSelector
+                ref={paceSelectorRef}
                 selectedPace={selectedPace}
                 onSelectPace={handleSelectPace}
                 highlight={hasLocation}
