@@ -43,6 +43,13 @@ See @docs/PRD.md for the full product requirements document.
 
 - `npx tsx scripts/seed-dynamodb.ts` — Seed DynamoDB with initial MCRRC run data
 
+### Deployment (Amplify)
+
+- `./scripts/deploy-amplify.sh <github-token>` — One-time Amplify app setup (creates app, IAM role, connects GitHub, triggers first build)
+- `aws amplify start-job --app-id <APP_ID> --branch-name main --job-type RELEASE` — Manually trigger a deployment
+- `aws amplify get-job --app-id <APP_ID> --branch-name main --job-id <JOB_ID> --query 'job.summary.status' --output text` — Check build status
+- `aws amplify list-apps --query 'apps[?name==`mcrrc-run-finder`].appId' --output text` — Get the Amplify app ID
+
 ## Architecture
 
 ```
@@ -84,6 +91,14 @@ See @docs/PRD.md for the full product requirements document.
 
 /scripts/                     # Utility scripts
   seed-dynamodb.ts            # Seed DynamoDB table with initial data
+  deploy-amplify.sh           # One-time Amplify Hosting setup via AWS CLI
+  resolve-amplify-symlinks.js # Post-build workaround for Next.js 16.x Turbopack symlinks
+
+/docs/                        # Documentation
+  PRD.md                      # Product requirements document
+  DEPLOYMENT.md               # Amplify deployment guide
+
+amplify.yml                   # Amplify build specification (monorepo, appRoot: frontend)
 ```
 
 ## Code Style
@@ -244,7 +259,6 @@ Claude must maintain a strong, passing test suite at all times. Follow this work
 
 ```
 NEXT_PUBLIC_API_URL=         # API Gateway endpoint URL
-NEXT_PUBLIC_APP_URL=         # Base URL of the deployed app (for generating edit links)
 ```
 
 ### Lambda (set via CDK environment, not `.env` files)
@@ -307,6 +321,16 @@ Other pages (`/runs/new`, `/runs/[id]`, `/runs/[id]/edit`) use standard flow lay
 - **Minimize cold start impact.** Keep Lambda bundles small. Use tree-shaking. Lazy-load heavy dependencies only when needed.
 - **Never hardcode AWS resource names** (table names, API URLs) in Lambda code. Always read from environment variables.
 
+## Known Issues
+
+### Next.js 16.x + Amplify Turbopack Symlinks
+
+Next.js 16.x uses Turbopack by default, which creates symlinks in `.next/node_modules/` pointing to packages in the parent `node_modules/`. Amplify's build bundler cannot follow these symlinks, causing deployment failures. The workaround is `scripts/resolve-amplify-symlinks.js`, which runs after `next build` in `amplify.yml` and replaces symlinks with real directory copies. See [aws-amplify/amplify-hosting#4074](https://github.com/aws-amplify/amplify-hosting/issues/4074).
+
+**Fallbacks if the workaround stops working:**
+1. Set `TURBOPACK=0` in Amplify environment variables to use webpack instead
+2. Pin Next.js to 15.x in `package.json` (Amplify has battle-tested 15.x support)
+
 ## Infrastructure Conventions
 
 ### CDK Patterns
@@ -333,7 +357,7 @@ Other pages (`/runs/new`, `/runs/[id]`, `/runs/[id]/edit`) use standard flow lay
 
 - The Next.js frontend is hosted on AWS Amplify Hosting, which natively supports Next.js (SSR, API routes, ISR, etc.) without needing static export.
 - Amplify connects to the GitHub repo and auto-deploys on push to `main`.
-- Environment variables (`NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_APP_URL`) are configured in the Amplify Console.
+- Environment variables (`NEXT_PUBLIC_API_URL`) are configured in the Amplify app (set via `deploy-amplify.sh` or the Amplify Console).
 - The `FrontendStack` CDK stack can optionally manage the Amplify app resource via `@aws-cdk/aws-amplify-alpha` or the app can be created directly in the Amplify Console.
 - NEVER use Vercel for hosting. The entire stack must remain on AWS.
 

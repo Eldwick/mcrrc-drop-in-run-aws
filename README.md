@@ -68,7 +68,6 @@ docs/               # Product requirements (PRD.md)
 
    Edit `frontend/.env.local` and set:
    - `NEXT_PUBLIC_API_URL` — your API Gateway endpoint URL (available after deploy)
-   - `NEXT_PUBLIC_APP_URL` — base URL of the app (use `http://localhost:3000` for local dev)
 
 4. **Deploy infrastructure**
 

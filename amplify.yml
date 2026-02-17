@@ -10,6 +10,10 @@ applications:
           commands:
             - npm run build
             - node ../scripts/resolve-amplify-symlinks.js
+      artifacts:
+        baseDirectory: .next
+        files:
+          - '**/*'
       cache:
         paths:
           - node_modules/**/*
