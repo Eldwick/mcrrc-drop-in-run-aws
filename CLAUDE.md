@@ -2,7 +2,7 @@
 
 A web app that helps Montgomery County Road Runners Club members discover weekly drop-in group runs by location and pace. Runners enter where they are and how fast they run; the app shows them the best matches on a map. Run organizers can list and manage their runs without creating an account.
 
-This is a refactor of the [original MCRRC Run Finder](~/projects/mcrrc_drop_in_runs) — same Next.js frontend, with the backend migrated from Vercel + Neon Postgres to AWS (API Gateway + Lambda + DynamoDB).
+This is a refactor of the [original MCRRC Run Finder](~/projects/mcrrc_drop_in_runs) — same Next.js frontend, with the entire stack migrated from Vercel + Neon Postgres to AWS (Amplify Hosting for frontend, API Gateway + Lambda + DynamoDB for backend). Everything is hosted on AWS — no Vercel.
 
 See @docs/PRD.md for the full product requirements document.
 
@@ -17,7 +17,7 @@ See @docs/PRD.md for the full product requirements document.
 - **Map:** Leaflet + React-Leaflet + OpenStreetMap tiles
 - **Geocoding:** Nominatim (OpenStreetMap) — free, no API key
 - **Testing:** Vitest + @testing-library/react
-- **Hosting:** Frontend on Vercel (or S3+CloudFront), backend on AWS
+- **Hosting:** All on AWS — frontend on AWS Amplify Hosting, backend on API Gateway + Lambda
 
 ## Commands
 
@@ -78,7 +78,7 @@ See @docs/PRD.md for the full product requirements document.
   /lib/                       # CDK stack definitions
     api-stack.ts              # API Gateway + Lambda functions
     database-stack.ts         # DynamoDB table + GSIs
-    frontend-stack.ts         # (Optional) S3 + CloudFront for frontend
+    frontend-stack.ts         # AWS Amplify Hosting for frontend
   /bin/                       # CDK entry point
     app.ts                    # CDK app instantiation
 
@@ -312,7 +312,7 @@ Other pages (`/runs/new`, `/runs/[id]`, `/runs/[id]/edit`) use standard flow lay
 ### CDK Patterns
 
 - All CDK code lives in `/infra/`. The entry point is `/infra/bin/app.ts`.
-- Use **separate stacks** for logically distinct resources: `DatabaseStack`, `ApiStack`, `FrontendStack` (optional).
+- Use **separate stacks** for logically distinct resources: `DatabaseStack`, `ApiStack`, `FrontendStack`.
 - Stack outputs (e.g., API Gateway URL, table name) are exported using `CfnOutput` for cross-stack references.
 - Use `cdk.RemovalPolicy.DESTROY` for dev resources to allow clean teardown. Switch to `RETAIN` for production.
 
@@ -328,6 +328,14 @@ Other pages (`/runs/new`, `/runs/[id]`, `/runs/[id]/edit`) use standard flow lay
 - Set `runtime: lambda.Runtime.NODEJS_20_X`.
 - Set `handler: 'handler'` (each file exports a `handler` function).
 - Pass environment variables (table name, etc.) via the `environment` property on `NodejsFunction`.
+
+### Frontend Hosting (AWS Amplify)
+
+- The Next.js frontend is hosted on AWS Amplify Hosting, which natively supports Next.js (SSR, API routes, ISR, etc.) without needing static export.
+- Amplify connects to the GitHub repo and auto-deploys on push to `main`.
+- Environment variables (`NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_APP_URL`) are configured in the Amplify Console.
+- The `FrontendStack` CDK stack can optionally manage the Amplify app resource via `@aws-cdk/aws-amplify-alpha` or the app can be created directly in the Amplify Console.
+- NEVER use Vercel for hosting. The entire stack must remain on AWS.
 
 ### DynamoDB in CDK
 
