@@ -323,13 +323,13 @@ Other pages (`/runs/new`, `/runs/[id]`, `/runs/[id]/edit`) use standard flow lay
 
 ## Known Issues
 
-### Next.js 16.x + Amplify Turbopack Symlinks
+### Pinned to Next.js 15.x for Amplify Compatibility
 
-Next.js 16.x uses Turbopack by default, which creates symlinks in `.next/node_modules/` pointing to packages in the parent `node_modules/`. Amplify's build bundler cannot follow these symlinks, causing deployment failures. The workaround is `scripts/resolve-amplify-symlinks.cjs`, which runs after `next build` in `amplify.yml` and replaces symlinks with real directory copies. The script uses the `.cjs` extension because the root `package.json` has `"type": "module"`. See [aws-amplify/amplify-hosting#4074](https://github.com/aws-amplify/amplify-hosting/issues/4074).
+The app is pinned to Next.js 15.x because Amplify Hosting's SSR adapter does not yet support Next.js 16's output format. Next.js 16 uses Turbopack by default, which creates symlinks in `.next/node_modules/` that Amplify's bundler can't follow ([amplify-hosting#4074](https://github.com/aws-amplify/amplify-hosting/issues/4074)), and even with symlinks resolved, the adapter fails to produce `deploy-manifest.json`. Next.js 15 uses webpack and is fully supported by Amplify.
 
-**Fallbacks if the workaround stops working:**
-1. Set `TURBOPACK=0` in Amplify environment variables to use webpack instead
-2. Pin Next.js to 15.x in `package.json` (Amplify has battle-tested 15.x support)
+The `scripts/resolve-amplify-symlinks.cjs` workaround script still runs in `amplify.yml` as a no-op safety net (it exits cleanly if `.next/node_modules/` doesn't exist). It uses the `.cjs` extension because the root `package.json` has `"type": "module"`.
+
+**To upgrade to Next.js 16 in the future:** wait for Amplify to officially support Next.js 16, then update `next` and `eslint-config-next` in `frontend/package.json` and revert `eslint.config.mjs` to use flat config imports instead of `FlatCompat`.
 
 ## Infrastructure Conventions
 
