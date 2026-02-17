@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { mockClient } from "aws-sdk-client-mock";
 import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
+import { ConditionalCheckFailedException } from "@aws-sdk/client-dynamodb";
 import type { APIGatewayProxyEvent, Context } from "aws-lambda";
 import { handler } from "../create.js";
 
@@ -131,5 +132,50 @@ describe("POST /runs (create)", () => {
     event.body = "not json";
     const result = await handler(event, context, () => {});
     expect(result!.statusCode).toBe(400);
+  });
+
+  it("rejects request body with unknown fields", async () => {
+    const result = await handler(
+      makeEvent({ ...validBody, editToken: "injected-token", PK: "RUN#hack" }),
+      context,
+      () => {}
+    );
+    expect(result!.statusCode).toBe(400);
+    expect(JSON.parse(result!.body).error).toBeDefined();
+  });
+
+  it("rejects paceGroups with extra keys", async () => {
+    const result = await handler(
+      makeEvent({
+        ...validBody,
+        paceGroups: { ...validBody.paceGroups, ultra_slow: "consistently" },
+      }),
+      context,
+      () => {}
+    );
+    expect(result!.statusCode).toBe(400);
+  });
+
+  it("sends PutCommand with ConditionExpression", async () => {
+    await handler(makeEvent(validBody), context, () => {});
+
+    const calls = ddbMock.commandCalls(PutCommand);
+    expect(calls).toHaveLength(1);
+    expect(calls[0].args[0].input.ConditionExpression).toBe(
+      "attribute_not_exists(PK)"
+    );
+  });
+
+  it("returns 409 on ConditionalCheckFailedException", async () => {
+    ddbMock.on(PutCommand).rejects(
+      new ConditionalCheckFailedException({
+        message: "The conditional request failed",
+        $metadata: {},
+      })
+    );
+
+    const result = await handler(makeEvent(validBody), context, () => {});
+    expect(result!.statusCode).toBe(409);
+    expect(JSON.parse(result!.body).error).toContain("already exists");
   });
 });

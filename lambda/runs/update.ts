@@ -4,6 +4,23 @@ import { docClient } from "../shared/dynamo-client.js";
 import { updateRunSchema } from "../shared/validators.js";
 import { success, error } from "../shared/response.js";
 
+const UPDATABLE_FIELDS = new Set([
+  "name",
+  "dayOfWeek",
+  "startTime",
+  "locationName",
+  "latitude",
+  "longitude",
+  "typicalDistances",
+  "terrain",
+  "paceGroups",
+  "contactName",
+  "contactEmail",
+  "contactPhone",
+  "notes",
+  "isActive",
+]);
+
 export const handler: APIGatewayProxyHandler = async (event) => {
   const id = event.pathParameters?.id;
   if (!id) {
@@ -44,6 +61,11 @@ export const handler: APIGatewayProxyHandler = async (event) => {
   }
 
   const updates = parsed.data;
+
+  if (!Object.values(updates).some((v) => v !== undefined)) {
+    return error("No fields to update", 400);
+  }
+
   const now = new Date().toISOString();
 
   // Build dynamic update expression
@@ -60,9 +82,9 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     expressionParts.push(`${alias} = ${valAlias}`);
   };
 
-  // Add each provided field
+  // Add each provided field (only allowlisted business fields)
   for (const [key, value] of Object.entries(updates)) {
-    if (value !== undefined) {
+    if (value !== undefined && UPDATABLE_FIELDS.has(key)) {
       addUpdate(key, value);
     }
   }
@@ -92,37 +114,36 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     updateExpression += ` REMOVE ${removeExpressions.join(", ")}`;
   }
 
-  await docClient.send(
+  const updateResult = await docClient.send(
     new UpdateCommand({
       TableName: process.env.TABLE_NAME,
       Key: { PK: `RUN#${id}`, SK: "METADATA" },
       UpdateExpression: updateExpression,
       ExpressionAttributeNames: expressionNames,
       ExpressionAttributeValues: expressionValues,
+      ReturnValues: "ALL_NEW",
     })
   );
 
-  // Build response by merging existing item with updates
-  const item = existing.Item;
-  const merged: Record<string, unknown> = { ...item, ...updates, updatedAt: now };
+  const updated = updateResult.Attributes!;
 
   return success({
     id,
-    name: merged.name,
-    dayOfWeek: merged.dayOfWeek,
-    startTime: merged.startTime,
-    locationName: merged.locationName,
-    latitude: merged.latitude,
-    longitude: merged.longitude,
-    typicalDistances: merged.typicalDistances,
-    terrain: merged.terrain,
-    paceGroups: merged.paceGroups,
-    contactName: merged.contactName ?? null,
-    contactEmail: merged.contactEmail ?? null,
-    contactPhone: merged.contactPhone ?? null,
-    notes: merged.notes ?? null,
-    isActive: merged.isActive,
-    createdAt: merged.createdAt,
-    updatedAt: now,
+    name: updated.name,
+    dayOfWeek: updated.dayOfWeek,
+    startTime: updated.startTime,
+    locationName: updated.locationName,
+    latitude: updated.latitude,
+    longitude: updated.longitude,
+    typicalDistances: updated.typicalDistances,
+    terrain: updated.terrain,
+    paceGroups: updated.paceGroups,
+    contactName: updated.contactName ?? null,
+    contactEmail: updated.contactEmail ?? null,
+    contactPhone: updated.contactPhone ?? null,
+    notes: updated.notes ?? null,
+    isActive: updated.isActive,
+    createdAt: updated.createdAt,
+    updatedAt: updated.updatedAt,
   });
 };

@@ -71,7 +71,9 @@ beforeEach(() => {
 describe("PUT /runs/{id} (update)", () => {
   it("returns 200 on valid update with matching token", async () => {
     ddbMock.on(GetCommand).resolves({ Item: existingItem });
-    ddbMock.on(UpdateCommand).resolves({});
+    ddbMock.on(UpdateCommand).resolves({
+      Attributes: { ...existingItem, name: "Updated Run", updatedAt: "2024-06-01T00:00:00Z" },
+    });
 
     const result = await handler(
       makeEvent("abc-123", "valid-token-123", { name: "Updated Run" }),
@@ -129,7 +131,9 @@ describe("PUT /runs/{id} (update)", () => {
 
   it("supports partial updates (single field)", async () => {
     ddbMock.on(GetCommand).resolves({ Item: existingItem });
-    ddbMock.on(UpdateCommand).resolves({});
+    ddbMock.on(UpdateCommand).resolves({
+      Attributes: { ...existingItem, startTime: "7:00 AM", updatedAt: "2024-06-01T00:00:00Z" },
+    });
 
     const result = await handler(
       makeEvent("abc-123", "valid-token-123", { startTime: "7:00 AM" }),
@@ -145,7 +149,9 @@ describe("PUT /runs/{id} (update)", () => {
 
   it("allows deactivating runs", async () => {
     ddbMock.on(GetCommand).resolves({ Item: existingItem });
-    ddbMock.on(UpdateCommand).resolves({});
+    ddbMock.on(UpdateCommand).resolves({
+      Attributes: { ...existingItem, isActive: false, updatedAt: "2024-06-01T00:00:00Z" },
+    });
 
     const result = await handler(
       makeEvent("abc-123", "valid-token-123", { isActive: false }),
@@ -169,7 +175,15 @@ describe("PUT /runs/{id} (update)", () => {
     delete (inactiveItem as Record<string, unknown>).GSI1PK;
     delete (inactiveItem as Record<string, unknown>).GSI1SK;
     ddbMock.on(GetCommand).resolves({ Item: inactiveItem });
-    ddbMock.on(UpdateCommand).resolves({});
+    ddbMock.on(UpdateCommand).resolves({
+      Attributes: {
+        ...inactiveItem,
+        isActive: true,
+        GSI1PK: "ACTIVE_RUN",
+        GSI1SK: "DAY#Tuesday",
+        updatedAt: "2024-06-01T00:00:00Z",
+      },
+    });
 
     const result = await handler(
       makeEvent("abc-123", "valid-token-123", { isActive: true }),
@@ -189,7 +203,9 @@ describe("PUT /runs/{id} (update)", () => {
 
   it("updates updatedAt timestamp", async () => {
     ddbMock.on(GetCommand).resolves({ Item: existingItem });
-    ddbMock.on(UpdateCommand).resolves({});
+    ddbMock.on(UpdateCommand).resolves({
+      Attributes: { ...existingItem, name: "New Name", updatedAt: "2024-06-01T00:00:00Z" },
+    });
 
     const result = await handler(
       makeEvent("abc-123", "valid-token-123", { name: "New Name" }),
@@ -199,5 +215,48 @@ describe("PUT /runs/{id} (update)", () => {
 
     const data = JSON.parse(result!.body).data;
     expect(data.updatedAt).not.toBe("2024-01-01T00:00:00Z");
+  });
+
+  it("rejects update body with unknown fields", async () => {
+    ddbMock.on(GetCommand).resolves({ Item: existingItem });
+
+    const result = await handler(
+      makeEvent("abc-123", "valid-token-123", {
+        name: "Updated",
+        editToken: "injected-token",
+      }),
+      context,
+      () => {}
+    );
+    expect(result!.statusCode).toBe(400);
+    expect(JSON.parse(result!.body).error).toBeDefined();
+  });
+
+  it("rejects empty update body", async () => {
+    ddbMock.on(GetCommand).resolves({ Item: existingItem });
+
+    const result = await handler(
+      makeEvent("abc-123", "valid-token-123", {}),
+      context,
+      () => {}
+    );
+    expect(result!.statusCode).toBe(400);
+    expect(JSON.parse(result!.body).error).toContain("No fields to update");
+  });
+
+  it("sends UpdateCommand with ReturnValues ALL_NEW", async () => {
+    ddbMock.on(GetCommand).resolves({ Item: existingItem });
+    ddbMock.on(UpdateCommand).resolves({
+      Attributes: { ...existingItem, name: "New Name", updatedAt: "2024-06-01T00:00:00Z" },
+    });
+
+    await handler(
+      makeEvent("abc-123", "valid-token-123", { name: "New Name" }),
+      context,
+      () => {}
+    );
+
+    const updateCalls = ddbMock.commandCalls(UpdateCommand);
+    expect(updateCalls[0].args[0].input.ReturnValues).toBe("ALL_NEW");
   });
 });

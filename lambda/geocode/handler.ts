@@ -23,14 +23,23 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     bounded: "1",
   });
 
-  const res = await fetch(
-    `https://nominatim.openstreetmap.org/search?${params.toString()}`,
-    {
-      headers: {
-        "User-Agent": "MCRRCRunFinder/1.0 (community running group finder)",
-      },
-    }
-  );
+  let res: Response;
+  try {
+    res = await fetch(
+      `https://nominatim.openstreetmap.org/search?${params.toString()}`,
+      {
+        headers: {
+          "User-Agent": "MCRRCRunFinder/1.0 (community running group finder)",
+        },
+      }
+    );
+  } catch {
+    return error("Geocoding service unavailable", 502);
+  }
+
+  if (!res.ok) {
+    return error("Geocoding service error", 502);
+  }
 
   const results: NominatimResult[] = await res.json();
 

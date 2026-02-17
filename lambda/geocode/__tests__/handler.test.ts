@@ -41,6 +41,7 @@ beforeEach(() => {
 describe("GET /geocode", () => {
   it("returns 200 with geocode results", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
       json: () => Promise.resolve(mockNominatimResponse),
     } as Response);
 
@@ -69,6 +70,7 @@ describe("GET /geocode", () => {
 
   it("calls Nominatim with correct URL and User-Agent", async () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
       json: () => Promise.resolve([]),
     } as Response);
 
@@ -87,8 +89,30 @@ describe("GET /geocode", () => {
     );
   });
 
+  it("returns 502 when Nominatim returns non-OK status", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: false,
+      status: 503,
+    } as Response);
+
+    const result = await handler(makeEvent("Bethesda"), context, () => {});
+    expect(result!.statusCode).toBe(502);
+    expect(JSON.parse(result!.body).error).toContain("Geocoding service error");
+  });
+
+  it("returns 502 when fetch throws network error", async () => {
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("Network error"));
+
+    const result = await handler(makeEvent("Bethesda"), context, () => {});
+    expect(result!.statusCode).toBe(502);
+    expect(JSON.parse(result!.body).error).toContain(
+      "Geocoding service unavailable"
+    );
+  });
+
   it("maps response correctly with number types", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
       json: () =>
         Promise.resolve([
           { display_name: "Test Place", lat: "39.12345", lon: "-77.98765" },

@@ -1,4 +1,5 @@
 import type { APIGatewayProxyHandler } from "aws-lambda";
+import { ConditionalCheckFailedException } from "@aws-sdk/client-dynamodb";
 import { PutCommand } from "@aws-sdk/lib-dynamodb";
 import { docClient } from "../shared/dynamo-client.js";
 import { createRunSchema } from "../shared/validators.js";
@@ -34,12 +35,20 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     updatedAt: now,
   };
 
-  await docClient.send(
-    new PutCommand({
-      TableName: process.env.TABLE_NAME,
-      Item: item,
-    })
-  );
+  try {
+    await docClient.send(
+      new PutCommand({
+        TableName: process.env.TABLE_NAME,
+        Item: item,
+        ConditionExpression: "attribute_not_exists(PK)",
+      })
+    );
+  } catch (err) {
+    if (err instanceof ConditionalCheckFailedException) {
+      return error("Run with this ID already exists", 409);
+    }
+    throw err;
+  }
 
   return success(
     {
