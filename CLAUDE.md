@@ -92,7 +92,7 @@ See @docs/PRD.md for the full product requirements document.
 /scripts/                     # Utility scripts
   seed-dynamodb.ts            # Seed DynamoDB table with initial data
   deploy-amplify.sh           # One-time Amplify Hosting setup via AWS CLI
-  resolve-amplify-symlinks.js # Post-build workaround for Next.js 16.x Turbopack symlinks
+  resolve-amplify-symlinks.cjs # Post-build workaround for Next.js 16.x Turbopack symlinks
 
 /docs/                        # Documentation
   PRD.md                      # Product requirements document
@@ -325,7 +325,7 @@ Other pages (`/runs/new`, `/runs/[id]`, `/runs/[id]/edit`) use standard flow lay
 
 ### Next.js 16.x + Amplify Turbopack Symlinks
 
-Next.js 16.x uses Turbopack by default, which creates symlinks in `.next/node_modules/` pointing to packages in the parent `node_modules/`. Amplify's build bundler cannot follow these symlinks, causing deployment failures. The workaround is `scripts/resolve-amplify-symlinks.js`, which runs after `next build` in `amplify.yml` and replaces symlinks with real directory copies. See [aws-amplify/amplify-hosting#4074](https://github.com/aws-amplify/amplify-hosting/issues/4074).
+Next.js 16.x uses Turbopack by default, which creates symlinks in `.next/node_modules/` pointing to packages in the parent `node_modules/`. Amplify's build bundler cannot follow these symlinks, causing deployment failures. The workaround is `scripts/resolve-amplify-symlinks.cjs`, which runs after `next build` in `amplify.yml` and replaces symlinks with real directory copies. The script uses the `.cjs` extension because the root `package.json` has `"type": "module"`. See [aws-amplify/amplify-hosting#4074](https://github.com/aws-amplify/amplify-hosting/issues/4074).
 
 **Fallbacks if the workaround stops working:**
 1. Set `TURBOPACK=0` in Amplify environment variables to use webpack instead

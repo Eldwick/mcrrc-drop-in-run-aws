@@ -1,5 +1,5 @@
 /**
- * resolve-amplify-symlinks.js
+ * resolve-amplify-symlinks.cjs
  *
  * Workaround for Next.js 16.x + Turbopack on AWS Amplify Hosting.
  *
@@ -13,7 +13,7 @@
  * See: https://github.com/aws-amplify/amplify-hosting/issues/4074
  *
  * Usage (from frontend/):
- *   node ../scripts/resolve-amplify-symlinks.js
+ *   node ../scripts/resolve-amplify-symlinks.cjs
  */
 
 const fs = require("fs");

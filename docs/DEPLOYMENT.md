@@ -80,14 +80,14 @@ The build is configured by `amplify.yml` at the repo root:
 - **`appRoot: frontend`** — tells Amplify this is a monorepo and the Next.js app lives in `frontend/`
 - **`npm ci`** — clean install of dependencies
 - **`npm run build`** — runs `next build`
-- **`node ../scripts/resolve-amplify-symlinks.js`** — resolves Turbopack symlinks (see Troubleshooting)
+- **`node ../scripts/resolve-amplify-symlinks.cjs`** — resolves Turbopack symlinks (see Troubleshooting)
 - **Cache** — `node_modules/` and `.next/cache/` are cached between builds
 
 ## Troubleshooting
 
 ### Build fails with symlink errors
 
-Next.js 16.x uses Turbopack, which creates symlinks in `.next/node_modules/` that Amplify's bundler can't follow. The `resolve-amplify-symlinks.js` post-build script handles this automatically. If it fails:
+Next.js 16.x uses Turbopack, which creates symlinks in `.next/node_modules/` that Amplify's bundler can't follow. The `resolve-amplify-symlinks.cjs` post-build script handles this automatically. If it fails:
 
 1. **Check the build logs** in the Amplify Console for the specific error
 2. **Fallback: disable Turbopack** — add `TURBOPACK=0` to the Amplify environment variables

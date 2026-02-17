@@ -9,7 +9,7 @@ applications:
         build:
           commands:
             - npm run build
-            - node ../scripts/resolve-amplify-symlinks.js
+            - node ../scripts/resolve-amplify-symlinks.cjs
       artifacts:
         baseDirectory: .next
         files:
