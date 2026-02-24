@@ -38,7 +38,7 @@ export const FloatingSearchBar = ({
   onSelectPace,
   locationDisplayName,
 }: FloatingSearchBarProps) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
   const barRef = useRef<HTMLDivElement>(null);
   const paceSelectorRef = useRef<PaceSelectorHandle>(null);
 
